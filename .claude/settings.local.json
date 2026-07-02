@@ -74,7 +74,14 @@
       "PowerShell(Move-Item *)",
       "Bash(pip show *)",
       "Bash(pyinstaller --onefile --noconsole --icon=NONE \"배차요청_감지.py\")",
-      "PowerShell(python -m PyInstaller --version)"
+      "PowerShell(python -m PyInstaller --version)",
+      "Bash(pip --version)",
+      "Bash(where markitdown *)",
+      "Bash(python -m pip show markitdown)",
+      "Bash(python -c \"import site; print\\(site.getusersitepackages\\(\\)\\)\")",
+      "Bash(python -m markitdown --help)",
+      "Bash(python -m markitdown \"./nexacroN 메뉴얼/advanced_development_guide_nexacro_n_v24_ko.pdf\" -o \"./nexacroN 메뉴얼/advanced_development_guide_nexacro_n_v24_ko.md\")",
+      "Bash(awk '{print $5, $NF}')"
     ]
   },
   "hooks": {

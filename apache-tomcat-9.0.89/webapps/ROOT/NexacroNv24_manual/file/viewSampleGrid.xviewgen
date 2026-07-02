@@ -1,0 +1,140 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ViewTemplateInfo version="1.0">
+  <ViewTemplate id="viewSampleGrid" viewtype="ViewSample" description=""/>
+  <Script version="1.0" type="xscript5.1"><![CDATA[fn_GetViewGenerationResult = function (fieldarray, contents, generationattr) {
+    var vResult = "";
+    var json_contents = JSON.parse(contents);
+    var json_fieldarray = JSON.parse(fieldarray);
+    //var json_generationattr = JSON.parse(generationattr);
+    
+    var View = new Object(); // JSON Object    
+    var tempInfo;
+    
+    var ModelArray = new Array();
+    var ModelInfo = new Object();
+    ModelInfo.fieldid = "";
+
+    var ComponentArray = new Array();
+    var ObjectsArray = new Array();
+    var ObjectArray = new Array();
+    var DatasetArray = new Array();
+    var ColumnArray = new Array();
+    
+    var GridColumnsArray = new Array();
+    var GridRowsArray = new Array();
+    var GridBandHeadArray = new Array();
+    var GridBandBodyArray = new Array();
+
+
+    for (var i in json_fieldarray.fields) {
+        if(ModelInfo.fieldid != "") {
+            ModelInfo.fieldid += ",";
+        }
+        ModelInfo.fieldid += json_fieldarray.fields[i].id;
+        
+        tempInfo = new Object();
+        tempInfo.tag = "Column";
+        tempInfo.attribute = new Object();
+        tempInfo.attribute.id = json_fieldarray.fields[i].id;
+        tempInfo.attribute.type = json_fieldarray.fields[i].datatype;
+        tempInfo.attribute.size = json_fieldarray.fields[i].datasize;
+        ColumnArray.push(tempInfo);
+        
+        tempInfo = new Object();
+        tempInfo.tag = "Column";
+        tempInfo.attribute = new Object();
+        tempInfo.attribute.size = "80";
+        GridColumnsArray.push(tempInfo);
+
+        tempInfo = new Object();
+        tempInfo.tag = "Cell";
+        tempInfo.attribute = new Object();
+        tempInfo.attribute.col = i;
+        tempInfo.attribute.text = json_fieldarray.fields[i].label;
+        GridBandHeadArray.push(tempInfo);        
+        
+        tempInfo = new Object();
+        tempInfo.tag = "Cell";
+        tempInfo.attribute = new Object();
+        tempInfo.attribute.col = i;
+        tempInfo.attribute.text = "bind:"+json_fieldarray.fields[i].id;
+        tempInfo.attribute.edittype = "text";
+        GridBandBodyArray.push(tempInfo);
+    }
+    var GridInfo = new Object();
+    GridInfo.tag = "Formats";
+    GridInfo.Formats = new Array();
+    var formatInfo = new Object();
+    formatInfo.tag = "Format";
+    formatInfo.attribute = new Object();
+    formatInfo.attribute.id = "default";
+    formatInfo.Format = new Array();
+    
+    tempInfo = new Object();
+    tempInfo.tag = "Columns";
+    tempInfo.Columns = GridColumnsArray;
+    formatInfo.Format.push(tempInfo);
+    
+    tempInfo = new Object();
+    tempInfo.tag = "Row";
+    tempInfo.attribute = new Object();
+    tempInfo.attribute.band = "head";
+    tempInfo.attribute.size = "24";
+    GridRowsArray.push(tempInfo);
+    tempInfo = new Object();
+    tempInfo.tag = "Row";
+    tempInfo.attribute = new Object();
+    tempInfo.attribute.size = "24";
+    GridRowsArray.push(tempInfo);    
+
+    tempInfo = new Object();
+    tempInfo.tag = "Rows";
+    tempInfo.Columns = GridRowsArray;
+    formatInfo.Format.push(tempInfo);
+    
+    tempInfo = new Object();
+    tempInfo.tag = "Band";
+    tempInfo.attribute = new Object();
+    tempInfo.attribute.id = "head";
+    tempInfo.Columns = GridBandHeadArray;
+    formatInfo.Format.push(tempInfo);    
+    
+    tempInfo = new Object();
+    tempInfo.tag = "Band";
+    tempInfo.attribute = new Object();
+    tempInfo.attribute.id = "body";    
+    tempInfo.Columns = GridBandBodyArray;
+    formatInfo.Format.push(tempInfo);    
+    GridInfo.Formats.push(formatInfo);
+    
+    tempInfo = new Object();
+    tempInfo.tag = "Grid";
+    tempInfo.attribute = new Object();
+    tempInfo.attribute.id = "Grid"+i;
+    tempInfo.attribute.left = 0;
+    tempInfo.attribute.top = 0;
+    tempInfo.attribute.right = 0;
+    tempInfo.attribute.bottom = 0;
+    tempInfo.attribute.binddataset = "viewdataset";
+    tempInfo.Grid = new Array();
+    tempInfo.Grid.push(GridInfo);
+    ComponentArray.push(tempInfo);        
+
+    ModelInfo.Components = ComponentArray;
+    ModelArray.push(ModelInfo);
+
+    tempInfo = new Object();
+    tempInfo.tag = "View";
+    tempInfo.attribute = json_contents.View.attribute;
+    tempInfo.Model = ModelArray;
+    tempInfo.Objects = ObjectsArray;
+
+    View.View = tempInfo;
+    var vResult = JSON.stringify(View);
+    return vResult;
+};
+
+fn_GetViewAttributeList = function () {
+    return null;
+};]]></Script>
+</ViewTemplateInfo>

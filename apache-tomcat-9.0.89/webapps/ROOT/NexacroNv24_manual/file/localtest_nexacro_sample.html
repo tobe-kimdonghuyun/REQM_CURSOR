@@ -1,0 +1,508 @@
+﻿<html >
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+  <title>Launcher Service 동작 샘플</title> 
+  <script type="text/javascript">
+      var objNexacro = new Object();
+      var xhrObject = null;
+      var xhrCreateObject = null;
+      var openurl = "http://127.0.0.1";
+      var setport = -1; //-p 옵션으로 지정한 포트번호가 있는 경우 지정; 없을 경우는 -1값 넣어야 동작함
+      var openport = -1; //openport가 실패할 경우 시도할 처음 port 번호
+      var findport = false; //setport 혹은 쿠키값으로 먼저 port 찾을때 false;
+      var openurl_add = "/launcher/nexacro";
+      var add_value = false; //json value 값을 직접 문자열 더하기 방식으로 만들지 여부
+      var is_file = true; //file를 로드하는지 서버에서 로드하는지 여부;ie일때만 사용
+      var is_jsonp = false; //jsonp방식으로 통신을 원하지 않으면 false
+      var jsonp_node = null;
+      var console = window.console || {log:function(){}}; 
+	  
+	  var bson_value = "http://127.0.0.1:8080/start.json";
+	  var enginesetupkey = "{DFC74642-2DFB-455B-879D-A097E4B97C9E}";
+
+      if (window.addEventListener) {
+          window.addEventListener("load", function () { start(); });
+          window.addEventListener("unload", function () { finish(); });
+          window.addEventListener("error", function () { http_onerror(); });
+      } else if (window.attachEvent) {
+          window.attachEvent("onload", function () { start(); });
+          window.attachEvent("onunload", function () { finish(); });      
+          window.attachEvent("onerror", function () { http_onerror(); });      
+      }
+        
+      try {
+        JSON.stringify(objNexacro);
+      } catch(e) {
+        add_value = true;
+      }
+
+      function start()
+      {
+          //생성 및 id 할당
+          alert("생성 및 id 할당");
+          objNexacro.platform = 'nexacro'; //필수 세팅
+          objNexacro.action = 'create'; //필수 세팅
+          //objNexacro.id = ''; // 통신이 성공하면 정보가 채워지므로 생략해도 무방
+          if (setport > 0)
+              openport = setport;
+          else 
+              openport = parseInt(getCookie("tplsvcopenport"), 10) | 0;
+          
+          if (openport > 0) {
+             findport = false;
+          } else {
+             findport = true;
+             openport = 7895;
+          } 
+          sendData(true, true, createProcess);
+      }
+
+      function finish()
+      {
+          //종료 ==> 종료는 생략할 수 있으나 런처 서비스에서 관련 정보를 일정 시간 동안 가지고 있지 않게 하려면 호출해야 함;
+          objNexacro.action = 'destroy';
+          sendData(true, false, resultProcess);     
+      }
+
+	  function setCookie( name, value, expiredays ) 
+	  {
+	    var todayDate = new Date(); 
+	    todayDate.setDate( todayDate.getDate() + expiredays ); 
+	    document.cookie = name + '=' + escape( value ) + '; path=/; expires=' + todayDate.toGMTString() + ';';
+	  }
+    
+	  function getCookie( name )
+	  { 
+  	    var nameOfCookie = name + '='; 
+  	    var x = 0; 
+  	    while ( x <= document.cookie.length ) { 
+  		    var y = (x+nameOfCookie.length); 
+		    if ( document.cookie.substring( x, y ) == nameOfCookie ) { 
+			    if ( (endOfCookie=document.cookie.indexOf( ';', y )) == -1 ) 
+				    endOfCookie = document.cookie.length; 
+				    return unescape( document.cookie.substring( y, endOfCookie ) ); 
+                } 
+			    x = document.cookie.indexOf( ' ', x ) + 1; 
+  				if ( x == 0 ) 
+  				    break; 
+       	} 
+      	return ''; 
+      }
+      
+      function sendData(openpost, is_create, resultCallback) 
+      {
+          if (is_jsonp == false) {
+              if (is_create && xhrCreateObject != null) {
+                  delete xhrCreateObject;
+                  xhrCreateObject = null;      
+              } else if (is_create == false && xhrCreateObject != null){
+                  delete xhrObject;
+                  xhrObject = null;      
+              }
+              
+              var sendObj = null;
+              if (is_file) {
+                  if (window.XMLHttpRequest) {
+                      sendObj = new XMLHttpRequest();
+                      sendObj.reqType = 1;
+                  } else if (window.XDomainRequest) {
+                      sendObj = new XDomainRequest();
+                      sendObj.reqType = 2; 
+                  }         
+              } else {
+                  if (window.XDomainRequest) {
+                      sendObj = new XDomainRequest();
+                      sendObj.reqType = 2;
+                  } else if (window.XMLHttpRequest) {
+                      sendObj = new XMLHttpRequest();
+                      sendObj.reqType = 1;          
+                  }
+              } 
+              
+              if (sendObj == null && window.ActiveXObject) {
+                  try {
+                    sendObj = new ActiveXObject("Microsoft.XMLHTTP");
+                    sendObj.reqType = 3;
+                  } catch(e) {
+                    sendObj = new ActiveXObject("Msxml2.XMLHTTP"); 
+                    sendObj.reqType = 4;
+                  }
+              }
+
+              if (sendObj == null)
+                return null;
+               
+              if (is_create)
+                xhrCreateObject = sendObj;
+              else
+                xhrObject = sendObj;
+                
+              if (sendObj.reqType != 2)  
+                sendObj.onreadystatechange = resultCallback;
+              else {
+                sendObj.onload = resultCallback;         
+                sendObj.onerror = http_onerror;
+                sendObj.ontimeout = http_ontimeout;         
+              }
+          } 
+
+          var jsonData;
+      
+          if (add_value) {
+            jsonData = '{"platform":"nexacro"';
+            jsonData += ',"action":"' + objNexacro.action + '"';
+            if (objNexacro.action != 'create')  {
+                jsonData += ',"id":"' + objNexacro.id + '"';
+                if (objNexacro.action != 'destroy') {
+                    jsonData += ',"value":' + objNexacro.value; //???
+                }
+            }
+            jsonData += '}';
+          
+          } else {
+            jsonData = JSON.stringify(objNexacro);
+          }
+          
+          var timestamp = "/" + new Date().getTime();//cache 방지용
+          var send_url = openurl + ":" + openport + openurl_add + timestamp;
+          
+          if (is_jsonp) {
+		    	var jsc_u = send_url + "?callback=" + "jsonp_result" + "&" + encodeURIComponent(jsonData); //jsonp_result는 콜백함수명;
+		  
+         if (jsonp_node == null) {
+		        jsonp_node = document.createElement('script');
+		     } else {
+		        document.getElementsByTagName('body')[0].removeChild(jsonp_node);
+		        delete jsonp_node;
+		        jsonp_node = document.createElement('script');
+		     }
+
+		    try {
+    		    jsonp_node.setAttribute('src', jsc_u);
+	    	    jsonp_node.setAttribute('type', 'text/javascript');
+	    	    jsonp_node.onerror = http_onerror; 
+		        document.getElementsByTagName('body')[0].appendChild(jsonp_node);
+    		} catch (e) {
+    		    console.log("jsonp error");
+    		}
+
+          } else {
+              if (sendObj.reqType != 2)    {
+                  if (openpost) {
+                      sendObj.open("POST", send_url, "true");
+                      sendObj.send(jsonData);
+                  } else {
+                      sendObj.open("GET", send_url + "?" + jsonData, "true");
+                      sendObj.send(null);
+                  }
+              } else {
+                  if (openpost) {
+                      sendObj.open("POST", send_url);
+                      sendObj.send(jsonData);
+                  } else {
+                      sendObj.open("GET", send_url);
+                      sendObj.send(jsonData);
+                  }       
+              }
+              return sendObj;
+         }
+      }
+
+      function jsonp_result(result) 
+      {
+          console.log(result);
+          
+          if (launcher_response(result)) {
+              if (objNexacro.action == 'create') {
+                setCookie("tplsvcopenport", openport, 14);
+                txtResult.value = objNexacro.action + " id = " + objNexacro.id + "\n" + txtResult.value;
+              } else {
+                  try {
+                      txtResult.value = objNexacro.action + " value = " + JSON.stringify(objNexacro.value) + "\n" + txtResult.value;
+                  } catch(e) {
+                      txtResult.value = objNexacro.action + " value = " + objNexacro.value + "\n" + txtResult.value;              
+                  }              
+              }
+          } else {
+            if (objNexacro.action == 'create') {
+                http_onerror();
+            } 
+          }
+                    
+      }
+      
+      function createProcess()
+      {
+          if ( xhrCreateObject.readyState == 4 || xhrCreateObject.reqType == 2)  {
+              console.log(xhrCreateObject.responseText);
+              if ((xhrCreateObject.status == 200 || xhrCreateObject.reqType == 2) && launcher_response(xhrCreateObject.responseText) ) {
+                  setCookie("tplsvcopenport", openport, 14);
+                  txtResult.value = objNexacro.action + " id = " + objNexacro.id + "\n" + txtResult.value;
+                
+                  return;
+              }
+             
+             return http_onerror();
+          }          
+      }
+
+      function http_onerror()
+      {
+          if (objNexacro.action == 'create') {
+              if (findport == false) {
+                if ( setport > 0) {
+                    setport = 0;
+                    openport = parseInt(getCookie("tplsvcopenport"), 10) | 0;
+                    if (openport > 0) {
+                        sendData(true, true, createProcess);
+                        return;
+                    }
+                }
+                openport = 7895;
+              } else {
+                openport++;
+              }
+              findport = true;
+                
+              if (openport <= 7935) //신규 런처는 7895 ~ 7935 사이 하나의 port를 open 함; 
+                sendData(true, true, createProcess);
+              else
+                alert("런처 서비스가 설치되지 않았거나 동작이 멈춰있는지 확인 바랍니다.");          
+           }     
+      }
+
+      function http_ontimeout()
+      {
+        return http_onerror();
+      }
+      
+      function resultProcess()
+      {
+          if (xhrObject.reqType == 2 || (xhrObject.readyState == 4 && xhrObject.status == 200) ) {
+              console.log(xhrObject.responseText);
+              var ret = launcher_response(xhrObject.responseText);
+              if (ret == false)
+              {
+                  if (objNexacro.action == "create")
+                  {
+                      alert("런처 서비스가 설치되지 않았거나 동작이 멈춰있는지 확인 바랍니다.");
+                  }
+              }
+              else
+              {
+                  try {
+                      txtResult.value = objNexacro.action + " value = " + JSON.stringify(objNexacro.value) + "\n" + txtResult.value;
+                  } catch(e) {
+                      txtResult.value = objNexacro.action + " value = " + objNexacro.value + "\n" + txtResult.value;              
+                  }
+              }
+          }
+      }
+
+      function launcher_response(result) {
+          //var result = resultObject.responseText;
+          if (result.length <= 0)
+            return false;
+          try {
+              var objResult = eval('(' + result + ')');
+              if (objResult.result == "success" && objResult.id.length > 0) {
+                  objNexacro = objResult;
+                  return true;
+              }
+              else {
+                  txtResult.value = "launcher_response error msg = " + objResult.result + "\n" + txtResult.value;
+                  return false;
+              }
+          } catch (e) {
+            return false;
+          }
+      }
+
+      
+
+      function do_property(test_action, action_sub)
+      {
+          alert(test_action);
+
+          if (add_value) {
+              if (test_action == 'setproperty') {
+                  //property 설정 ==> action = 'property' value = {"property명" : "property값", ... };
+                  objNexacro.action = 'setproperty';
+                  if (action_sub == 'basic')
+                  {
+                     objNexacro.value = { "key": "LauncherService", "bjson": bson_value,  "splashimage": "default", "onlyone":false, "enginesetupkey":enginesetupkey, "globalvalue": "av=YJaa,ec=YJABC,c=YJTEST"};
+                  }
+              }
+              else if (test_action == 'getproperty') {
+                  //property 설정 ==> action = 'property' value = {"property명" : "property값", ... };
+                  objNexacro.action = 'getproperty';
+                  objNexacro.value = { "key": "", "bjson": "", "splashimage": "", "onlyone":false, "enginesetupkey":"", "globalvalue": ""};
+              }
+              else
+                  return;          
+          } 
+          else 
+          {
+              if (test_action == 'setproperty') 
+              {
+                  //property 설정 ==> action = 'property' value = {"property명" : "property값", ... };
+                  objNexacro.action = 'setproperty';
+                  if (action_sub == 'basic')
+                  {
+                    objNexacro.value = { "key": "LauncherService", "bjson": bson_value,  "splashimage": "default", "onlyone":false, "enginesetupkey":enginesetupkey, "globalvalue": "av=YJaa,ec=YJABC,c=YJTEST"};
+                  }
+              }
+              else if (test_action == 'getproperty') 
+              {
+                  //property 설정 ==> action = 'property' value = {"property명" : "property값", ... };
+                  objNexacro.action = 'getproperty';
+                  objNexacro.value = { "key": "", "bjson": "", "splashimage": "", "onlyone":false, "enginesetupkey":"", "globalvalue": ""};
+              }
+              else
+                  return;
+          }
+
+          sendData(true, false, resultProcess);
+      }
+
+      function do_method(test_action) {
+          alert(test_action);
+
+          objNexacro.action = 'method';
+          
+          if (add_value) {
+              if (test_action == 'makeshortcut') {
+                  //method 실행 ==> action = 'method' value = {"method명" : {"param" : method 입력값 array }};
+                  objNexacro.value = { "makeshortcut": { "param": ["Nlauncher", "http://127.0.0.1:8080/test.ico", "%USERAPP%\\ICONTEST", "desktop", true] } };
+              }
+              else if (test_action == 'launch') {
+                  //method 실행 ==> action = 'method' value = {"method명" :  };
+                  objNexacro.value = '{ "launch": null }';
+                  check_event = true;
+              }
+              else if (test_action == 'isexistshortcut') {
+                  //method 실행 ==> action = 'method' value = {"method명" : {"param" : method 입력값 array, "result" : 결과값 }};
+                  objNexacro.value = { "isexistshortcut": { "param": ["Nlauncher", "desktop", false] } };
+              }
+              else if (test_action == 'download') {
+                  //method 실행 ==> action = 'method' value = {"method명" : };
+                  objNexacro.value = '{ "download": null }';
+              }
+              else if (test_action == 'addWebInfo') {
+                  //method 실행 ==> action = 'method' value = {"method명" : {"param" : method 입력값 array }};
+                  objNexacro.value = '{ "addWebInfo": { "param": [window.document.cookie] } }';
+              }
+              else if (test_action == 'getengineversion') {
+                  //method 실행 ==> action = 'method' value = {"method명" : {"param" : method 입력값 array, "result" : 결과값 }};
+                  objNexacro.value = { "getengineversion": { "param": [enginesetupkey]} };
+              }
+              else if (test_action == 'isexistengine') {
+                  //method 실행 ==> action = 'method' value = {"method명" : {"param" : method 입력값 array, "result" : 결과값 }};
+                  objNexacro.value = { "isexistengine": { "param": [enginesetupkey]} };
+              }
+              else if (test_action == 'deleteshortcut') {
+                  //method 실행 ==> action = 'method' value = {"method명" : {"param" : method 입력값 array, "result" : 결과값 }};
+                  objNexacro.value = { "deleteshortcut": { "param": ["Nlauncher", "desktop", false] } };
+              }
+              else
+                  return;          
+          } else {
+              if (test_action == 'makeshortcut') {
+                  //method 실행 ==> action = 'method' value = {"method명" : {"param" : method 입력값 array }};
+                  objNexacro.value = { "makeshortcut": { "param": ["Nlauncher", "http://127.0.0.1:8080/test.ico", "%USERAPP%\\ICONTEST", "desktop", true] } };
+              }
+              else if (test_action == 'launch') {
+                  //method 실행 ==> action = 'method' value = {"method명" :  };
+                  objNexacro.value = { "launch": null };
+                  check_event = true;
+              }
+              else if (test_action == 'isexistshortcut') {
+                  //method 실행 ==> action = 'method' value = {"method명" : {"param" : method 입력값 array, "result" : 결과값 }};
+                  objNexacro.value = { "isexistshortcut": { "param": ["Nlauncher", "desktop", false] } };
+              }
+              else if (test_action == 'download') {
+                  //method 실행 ==> action = 'method' value = {"method명" : };
+                  objNexacro.value = { "download": null };
+              }
+              else if (test_action == 'addWebInfo') {
+                  //method 실행 ==> action = 'method' value = {"method명" : {"param" : method 입력값 array }};
+                  objNexacro.value = { "addWebInfo": { "param": [window.document.cookie] } };
+              }
+              else if (test_action == 'getengineversion') {
+                  //method 실행 ==> action = 'method' value = {"method명" : {"param" : method 입력값 array, "result" : 결과값 }};
+                  objNexacro.value = { "getengineversion": { "param": [enginesetupkey],"result": null } };
+              }
+              else if (test_action == 'isexistengine') {
+                  //method 실행 ==> action = 'method' value = {"method명" : {"param" : method 입력값 array, "result" : 결과값 }};
+                  objNexacro.value = { "isexistengine": { "param": [enginesetupkey],"result": null } };
+              }
+              else if (test_action == 'deleteshortcut') {
+                  //method 실행 ==> action = 'method' value = {"method명" : {"param" : method 입력값 array, "result" : 결과값 }};
+                  objNexacro.value = { "deleteshortcut": { "param": ["Nlauncher", "desktop", true], "result": null } };
+              }
+              else
+                  return;
+          }
+          sendData(true, false, resultProcess);
+      }
+
+      function get_event(test_action) {
+          alert(test_action);
+
+          objNexacro.action = 'event';
+          if (test_action == 'error') {
+              //get event info  ==> action = 'event' value = {"event명" : {...}};
+              if (add_value) {
+                  objNexacro.value = '{ "error": { "code": 0, "message": "" } }';                            
+              } else {
+                  objNexacro.value = { "error": { "code": 0, "message": "" } };              
+              }
+          }
+          else
+              return;
+
+          sendData(true, false, resultProcess);
+      }
+      function get_check(test_action) {
+          alert(test_action);
+
+          objNexacro.action = 'check';
+          if (test_action == 'getlauncherversion') {
+              //get check info  ==> action = 'check' value = {"check명" : {...}};
+              if (add_value) {
+                  objNexacro.value = '{ "getlauncherversion": { null } }';                            
+              } else {
+                  objNexacro.value = { "getlauncherversion": {  } };              
+              }
+          }
+          else
+              return;
+
+          sendData(true, false, resultProcess);
+      }
+  </script>
+    <style type="text/css">
+    </style>
+</head>
+<body style="height: 600px" >
+    &nbsp;
+    <!-- property test -->
+    <input id="btn_p_s_basic" type="button" value="property setting(basic)" onclick="do_property('setproperty', 'basic');" style="position: absolute; width: 200px; height: 40px; top: 10px; left: 10px" />
+    <input id="btn_p_g_all" type="button" value="property getting(all)" onclick="do_property('getproperty', 'all');" style="position: absolute; width: 200px; height: 40px; top: 10px; left: 215px" />
+    <input id="btn_check_ver" type="button" value="getlauncherversion" onclick="get_check('getlauncherversion');" style="position: absolute; width: 200px; height: 40px; top: 10px; left: 420px" />
+    <input id="isexistengine" type="button" value="isexistengine" onclick="do_method('isexistengine');" style="position: absolute; width: 200px; height: 40px; top: 10px; left: 625px" />
+    <!-- method test -->
+    <input id="makeshortcut" type="button" value="makeshortcut" onclick="do_method('makeshortcut');" style="position: absolute; width: 200px; height: 40px; top: 55px; left: 10px" />
+    <input id="launch" type="button" value="launch" onclick="do_method('launch');" style="position: absolute; width: 200px; height: 40px; top: 55px; left: 215px" />
+    <input id="isexistshortcut" type="button" value="isexistshortcut" onclick="do_method('isexistshortcut');" style="position: absolute; width: 200px; height: 40px; top: 55px; left: 420px" />
+    <input id="download" type="button" value="download" onclick="do_method('download');" style="position: absolute; width: 200px; height: 40px; top: 55px; left: 625px" />
+    <input id="addWebInfo" type="button" value="addWebInfo" onclick="do_method('addWebInfo');" style="position: absolute; width: 200px; height: 40px; top: 100px; left: 10px" />
+    <input id="getengineversion" type="button" value="getengineversion" onclick="do_method('getengineversion');" style="position: absolute; width: 200px; height: 40px; top: 100px; left: 215px" />
+    <input id="deleteshortcut" type="button" value="deleteshortcut" onclick="do_method('deleteshortcut');" style="position: absolute; width: 200px; height: 40px; top: 100px; left: 420px" />
+    <input id="checkerrorvalue" type="button" value="checkerrorvalue" onclick="get_event('error');" style="position: absolute; width: 200px; height: 40px; top: 100px; left: 625px" />
+    
+    <!-- result -->
+    <textarea id="txtResult" style="position: absolute; width: 836px; height: 464px; top: 145px; left: 10px" wrap="hard" />
+
+</body>
+</html>

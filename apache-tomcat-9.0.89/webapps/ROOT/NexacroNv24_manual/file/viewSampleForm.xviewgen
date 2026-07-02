@@ -1,0 +1,132 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ViewTemplateInfo version="1.0">
+  <ViewTemplate id="viewSampleForm" viewtype="ViewSample" description=""/>
+  <Script version="1.0" type="xscript5.1"><![CDATA[fn_GetViewGenerationResult = function (fieldarray, contents, generationattr) {
+    var vResult = "";
+    var json_contents = JSON.parse(contents);
+    var json_fieldarray = JSON.parse(fieldarray);
+    var json_generationattr = JSON.parse(generationattr);
+    
+    var View = new Object(); // JSON Object    
+    var tempInfo;
+    var tempPostion;
+    
+    var ModelArray = new Array();
+    var ModelInfo;
+    
+    var ComponentArray;
+    var ObjectsArray = new Array();
+    var ObjectArray = new Array();
+    var DatasetArray = new Array();
+    var ColumnArray = new Array();
+    var BindsArray = new Array();
+    var BindArray = new Array();
+
+    for (var i in json_fieldarray.fields) {
+        ModelInfo = new Object();
+        ComponentArray = new Array();
+        ModelInfo.fieldid = json_fieldarray.fields[i].id;
+        
+        tempInfo = new Object();
+        tempInfo.tag = "Column";
+        tempInfo.attribute = new Object();
+        tempInfo.attribute.id = json_fieldarray.fields[i].id;
+        tempInfo.attribute.type = json_fieldarray.fields[i].datatype;
+        tempInfo.attribute.size = json_fieldarray.fields[i].datasize;
+        ColumnArray.push(tempInfo);
+        
+        if(json_fieldarray.fields[i].uselabel == "true") {
+            tempInfo = new Object();
+            tempInfo.tag = "Static";
+            tempInfo.attribute = new Object();
+            tempInfo.attribute.id = "Static"+i;
+            tempInfo.attribute.text = json_fieldarray.fields[i].label;
+            tempInfo.attribute.left = 0;
+            tempInfo.attribute.top = i*30;
+            tempInfo.attribute.width = 60;
+            tempInfo.attribute.height = 20;
+            tempInfo.attribute.font = "normal bold 15pt/normal";
+            ComponentArray.push(tempInfo);
+        }
+        
+        tempInfo = new Object();
+        tempInfo.tag = "Edit";
+        tempInfo.attribute = new Object();
+        tempInfo.attribute.id = "Edit"+i;
+        tempInfo.attribute.left = "Static"+i+":5";
+        tempInfo.attribute.top = i*30;
+        tempInfo.attribute.width = 100;
+        tempInfo.attribute.height = 20;
+        tempInfo.attribute.font = "normal bold 15pt/normal";
+        ComponentArray.push(tempInfo);
+        
+        tempInfo = new Object();
+        tempInfo.tag = "BindItem";
+        tempInfo.attribute = new Object();
+        tempInfo.attribute.id = "item"+i;
+        tempInfo.attribute.compid = "Edit"+i;
+        tempInfo.attribute.propid = "value";
+        tempInfo.attribute.datasetid = "viewdataset";
+        tempInfo.attribute.columnid = json_fieldarray.fields[i].id;
+        BindArray.push(tempInfo);    
+        
+        ModelInfo.Components = ComponentArray;
+        ModelArray.push(ModelInfo);        
+    }
+
+    tempInfo = new Object();
+    tempInfo.tag = "Bind";
+    tempInfo.Bind = BindArray;
+    BindsArray.push(tempInfo);
+    
+    if(json_generationattr.attributes.use_triggerbutton == "true") {
+        ModelInfo = new Object();
+        ComponentArray = new Array();
+        ModelInfo.fieldid = "";
+        
+        tempInfo = new Object();
+        tempInfo.tag = "Button";
+        
+        var buttonwidth = 70;
+        tempInfo.attribute = new Object();
+        tempInfo.attribute.id = "btn_Trigger";
+        tempInfo.attribute.right = 0;
+        tempInfo.attribute.top = 0;
+        tempInfo.attribute.width = buttonwidth;
+        tempInfo.attribute.height = 20;
+        tempInfo.attribute.text = "Search"
+        ComponentArray.push(tempInfo);
+        ModelInfo.Components = ComponentArray;
+        ModelArray.push(ModelInfo);
+    }    
+
+    tempInfo = new Object();
+    tempInfo.tag = "View";
+    tempInfo.attribute = json_contents.View.attribute;
+    tempInfo.Model = ModelArray;
+    tempInfo.Objects = ObjectsArray;
+    tempInfo.Bind = BindsArray;
+
+    View.View = tempInfo;
+    var vResult = JSON.stringify(View);
+    return vResult;
+};
+
+fn_GetViewAttributeList = function () {
+    var attrArray = new Array();
+    var attrObj = new Object();
+    attrObj.id = "use_triggerbutton";
+    attrObj.edittype = "Boolean";
+    attrObj.defaultvalue = "true";
+    attrObj.description = "Create a button for data inquiry (true/false)";
+    attrArray.push(attrObj);
+    
+    var attr = new Object();
+    attr.attributecount = attrArray.length;
+    attr.attributes = attrArray;
+    
+    var strJson = JSON.stringify(attr);
+    trace("RE : "+strJson);    
+    return strJson;
+};]]></Script>
+</ViewTemplateInfo>

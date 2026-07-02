@@ -160,11 +160,11 @@
              Note: The pattern used is equivalent to using pattern="common" -->
         <Valve className="org.apache.catalina.valves.AccessLogValve" directory="logs" pattern="%h %l %u %t &quot;%r&quot; %s %b" prefix="localhost_access_log" suffix=".txt"/>
 
-      <Context docBase="d:\git_prj\REQM\apache-tomcat-9.0.89\wtpwebapps\REQM" path="/REQM" reloadable="true" source="org.eclipse.jst.j2ee.server:REQM"/>
+      <Context docBase="E:\git_prj\REQM_CURSOR\apache-tomcat-9.0.89\wtpwebapps\REQM" path="/REQM" reloadable="true" source="org.eclipse.jst.j2ee.server:REQM"/>
       
       <!-- <Context docBase="d:\REQM\react-effects-demo\dist" path="/effects" reloadable="true" /> -->
       <!-- <Context docBase="d:\REQM\nexacroK" path="/nexacroK" reloadable="true" /> -->
-      <Context docBase="d:\git_prj\REQM\nexacroK" path="/nexacroK" reloadable="true" />
+      <Context docBase="E:\git_prj\REQM_CURSOR\nexacroK" path="/nexacroK" reloadable="true" />
       
       <!-- <Context docBase="e:\git_prj\REQM\nexacroN" path="/nexacroN" reloadable="true" /> -->
       </Host>

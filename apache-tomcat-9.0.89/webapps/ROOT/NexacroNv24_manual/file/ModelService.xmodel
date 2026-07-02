@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ModelInfo version="1.1">
+  <Models>
+    <Model id="mdlSample_Search" name="mdlSample_Search" iotype="input" description="">
+      <Field required="false" id="name" label="Name" fieldtype="FreeText" datatype="STRING" datasize="80" uselabel="true"/>
+      <Field required="false" id="company" label="Company" fieldtype="FreeText" datatype="STRING" datasize="80" uselabel="true"/>
+      <FieldUserAttributes>
+        <Attribute name="uselabel" edittype="Boolean" enuminfo="" defaultvalue="true" description="Sets whether the field data can use label."/>
+      </FieldUserAttributes>
+    </Model>
+    <Model id="mdlSample_Detail" name="mdlSample_Detail" iotype="output" description="">
+      <Field required="false" id="name" label="Name" fieldtype="FreeText" datatype="STRING" datasize="80" uselabel="true"/>
+      <Field required="false" id="company" label="Company" fieldtype="FreeText" datatype="STRING" datasize="80" uselabel="true"/>
+      <FieldUserAttributes>
+        <Attribute name="uselabel" edittype="Boolean" enuminfo="" defaultvalue="true" description="Sets whether the field data can use label."/>
+      </FieldUserAttributes>
+    </Model>
+  </Models>
+  <Service id="TEST" name="TEST" url="http://localhost:8080"/>
+</ModelInfo>
